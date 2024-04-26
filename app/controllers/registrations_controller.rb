@@ -1,25 +1,18 @@
 class RegistrationsController < Devise::RegistrationsController
-  before_action :authenticate_user!, except: [:logout, :login, :create]
+  before_action :authenticate_user!, only: [:logout]
 
   def login
-    user = User.find_by(email: user_params["email"])
+    user = User.find_by(email: params[:email])
     if user&.valid_password?(params[:password])
-      token = generate_token(user)
-      cookies.signed[:jwt] = { value: token, httponly: true }
-      render json: user
+      render json: { user: user, token: user.generate_jwt } # Gera um token JWT e retorna para o front-end
     else
       render json: { error: 'Invalid email or password' }, status: :unauthorized
     end
   end
 
-  def logout
-    cookies.delete(:jwt)
-    head :no_content
-  end
-
   def create
     byebug
-    user = User.new(user_params)
+    user = User.new
     if user.save
       render json: user, status: :created
     else
@@ -27,14 +20,14 @@ class RegistrationsController < Devise::RegistrationsController
     end
   end
 
-  def generate_token(user)
-    payload = { user_id: user.id }
-    JWT.encode(payload, Rails.application.secrets.secret_key_base)
+  def logout
+    current_user.update(authentication_token: nil) # Limpa o token de autenticação
+    head :no_content
   end
 
   private
 
   def user_params
-    params.require(:registration).permit(:name, :email, :password, :password_confirmation)
+    params.require(:registration).permit(:email, :password, :password_confirmation)
   end
 end
