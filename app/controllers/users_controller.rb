@@ -1,5 +1,6 @@
 class UsersController < ActionController::Base
 
+  # GET /users/:id
   def show
     @user = User.find(params[:id])
     render json: @user
