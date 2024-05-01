@@ -5,6 +5,7 @@ class UsersController < ActionController::Base
     render json: @user
   end
 
+  # PUT /users/:id
   def update
     @user = User.find(params[:id])
     @user.update(user_params)
